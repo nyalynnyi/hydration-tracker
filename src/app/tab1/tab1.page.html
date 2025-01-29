@@ -1,17 +1,44 @@
-<ion-header [translucent]="true">
+<ion-header>
   <ion-toolbar>
-    <ion-title>
-      Tab 1
-    </ion-title>
+    <ion-title>Hydration tracker</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Tab 1</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content>
+  <div style="text-align: center; padding: 20px;">
+    <h2>Current Hydration</h2>
 
-  <app-explore-container name="Tab 1 page"></app-explore-container>
+    <div style="position: relative; width: 300px; height: 300px; margin: 20px auto;">
+      <canvas id="hydrationChart"></canvas>
+    </div>
+    
+    <div class="chart-container">
+      <div class="circle">
+        <div class="mask full" id="mask-full"></div>
+        <div class="mask half">
+          <div class="fill" id="mask-fill"></div>
+        </div>
+        <div class="inside-circle">
+          <span id="percentage">0%</span>
+        </div>
+      </div>
+    
+      <button onclick="addWater(10)">+10</button>
+      <button onclick="addWater(20)">+20</button>
+    </div>
+    
+    
+
+    <div style="margin-top: 20px;">
+      <h3>Goal: {{ hydrationGoal }}oz</h3>
+      <h4>Drinked: {{ currentHydration }}oz</h4>
+      <h4>Last: {{ hydrationGoal - currentHydration > 0 ? hydrationGoal - currentHydration : 0 }}oz</h4>
+    </div>
+
+    <div style="margin-top: 20px;">
+      <ion-button color="primary" expand="block" (click)="addWater(8)">Add 8oz</ion-button>
+      <ion-button color="secondary" expand="block" (click)="addWater(16)">Add 16oz</ion-button>
+      <ion-button color="tertiary" expand="block" (click)="addWater(32)">Add 32oz</ion-button>
+    </div>
+  </div>
 </ion-content>
