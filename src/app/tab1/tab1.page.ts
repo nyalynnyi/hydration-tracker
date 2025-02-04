@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { Chart, ArcElement, Tooltip, Legend, DoughnutController } from 'chart.js';
 import { AlertController } from '@ionic/angular';
+import { AppStorageService } from '../app-storage.service';
+import { DRINK_HISTORY } from '../app.constants';
 
 Chart.register(ArcElement, Tooltip, Legend, DoughnutController);
 
@@ -15,9 +17,10 @@ export class Tab1Page implements OnInit {
   currentHydration: number = 0; 
   hydrationGoal: number = 2400;
   idealWaterIntake: number = 2810; 
- 
+  drinkArray: Array<{ amount: number, timestamp: Date }> = [];
 
-  constructor(private alertController: AlertController) {}
+  constructor(private alertController: AlertController,
+    private appStorage: AppStorageService) {}
 
   async showInputPrompt() {
     const alert = await this.alertController.create({
@@ -52,10 +55,14 @@ export class Tab1Page implements OnInit {
     await alert.present();
   }
 
-  
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     this.createHydrationChart();
+  
+    const history = await this.appStorage.get(DRINK_HISTORY);
+    if (history) {
+      this.drinkArray = JSON.parse(history);
+    }
   }
 
   createHydrationChart(): void {
@@ -109,5 +116,21 @@ export class Tab1Page implements OnInit {
   addWater(amount: number): void {
     this.currentHydration = Math.min(this.currentHydration + amount, this.hydrationGoal);
     this.updateChart(this.currentHydration);
+  
+    const newDrink = { amount: amount, timestamp: new Date() };
+    this.drinkArray.unshift(newDrink);
+  
+    this.appStorage.set(DRINK_HISTORY, JSON.stringify(this.drinkArray));
   }
+  goalWater(amount: number): void {
+    this.currentHydration = Math.min(this.currentHydration + amount, this.hydrationGoal);
+    this.updateChart(this.currentHydration);
+  
+    const newDrink = { amount: amount, timestamp: new Date() };
+    this.drinkArray.unshift(newDrink);
+  
+    this.appStorage.set(DRINK_HISTORY, JSON.stringify(this.drinkArray));
+  }
+
+  
 }
