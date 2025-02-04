@@ -1,25 +1,48 @@
-<ion-header>
-  <ion-toolbar>
-    <ion-title>Денне споживання води</ion-title>
-  </ion-toolbar>
-</ion-header>
+<ion-content class="ion-padding">
+  <h2>Statistics</h2>
 
-<ion-segment [(ngModel)]="selectedMode" (ionChange)="changeMode(selectedMode)">
-  <ion-segment-button value="day">
-    DAY
-  </ion-segment-button>
-  <ion-segment-button value="week">
-    WEEK
-  </ion-segment-button>
-  <ion-segment-button value="month">
-    MOUNTH
-  </ion-segment-button>
-</ion-segment>
+  <ion-segment [(ngModel)]="selectedMode" (ionChange)="changeMode(selectedMode)">
+    <ion-segment-button value="day">
+      DAY
+    </ion-segment-button>
+    <ion-segment-button value="week">
+      WEEK
+    </ion-segment-button>
+    <ion-segment-button value="month">
+      MONTH
+    </ion-segment-button>
+  </ion-segment>
 
-<ion-content>
   <div style="position: relative; height: 400px;">
     <canvas id="waterConsumptionChart"></canvas>
   </div>
+
+  <div class="statistics-container">
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Details</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-list>
+          <ion-item>
+            <ion-label>Total amount of water</ion-label>
+            <ion-text slot="end">{{ totalConsumption.toFixed(2) }} ml</ion-text>
+          </ion-item>
+          <ion-item>
+            <ion-label>Average amount</ion-label>
+            <ion-text slot="end">{{ averageConsumption.toFixed(2) }} ml</ion-text>
+          </ion-item>
+          <ion-item>
+            <ion-label>Frequency</ion-label>
+            <ion-text slot="end">{{ consumptionFrequency.toFixed(2) }} </ion-text>
+          </ion-item>
+          <ion-item>
+            <ion-label>%</ion-label>
+            <ion-text slot="end">{{ goalAchievement.toFixed(2) }}%</ion-text>
+          </ion-item>
+        </ion-list>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
 </ion-content>
-
-

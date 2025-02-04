@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Chart, registerables } from 'chart.js';
 import { AppStorageService } from '../app-storage.service';
-import { DRINK_HISTORY } from '../app.constants';
+import { DRINK_HISTORY, WATER_GOAL } from '../app.constants';
 
 Chart.register(...registerables);
 
@@ -15,19 +15,78 @@ export class Tab2Page {
   waterConsumptionChart: any;
   drinkArray: Array<{ amount: number, timestamp: Date }> = [];
   selectedMode: 'day' | 'week' | 'month' = 'week';
+  totalConsumption: number = 0;
+  averageConsumption: number = 0;
+  consumptionFrequency: number = 0;
+  goalAchievement: number = 0; 
+  hydrationGoal: number = 0; 
 
   constructor(private appStorage: AppStorageService) {}
 
   async ionViewDidEnter() {
     await this.loadDrinkHistory();
     this.createWaterConsumptionChart();
+    console.log(this.hydrationGoal)
+  }
+
+  changeMode(mode: 'day' | 'week' | 'month') {
+    this.selectedMode = mode;
+    this.createWaterConsumptionChart();
   }
 
   async loadDrinkHistory() {
     const data = await this.appStorage.get(DRINK_HISTORY);
+    const storedGoal = localStorage.getItem(WATER_GOAL);
     if (data) {
       this.drinkArray = JSON.parse(data);
+      this.calculateWaterStatistics(); // Викликаємо розрахунок статистики
     }
+    if(storedGoal){
+      this.hydrationGoal = Number(storedGoal);
+    }
+  }
+
+  calculateWaterStatistics(): void {
+    // Загальна кількість випитої води (у мілілітрах)
+    this.totalConsumption = this.drinkArray.reduce((sum, drink) => sum + drink.amount, 0);
+  
+    // Кількість днів для розрахунку середніх значень
+    const days = this.drinkArray.length > 0 ? this.getUniqueDays(this.drinkArray) : 1;
+  
+    // Середня кількість випитої води
+    if (this.selectedMode === 'day') {
+      // У режимі "день" середня кількість — це загальна кількість за день
+      this.averageConsumption = this.totalConsumption ; // Переводимо в літри
+    } else {
+      // У режимах "тиждень" і "місяць" — середня кількість на день
+      this.averageConsumption = (this.totalConsumption / days) ; // Переводимо в літри
+    }
+  
+    // Частота споживання води (кількість разів на день)
+    this.consumptionFrequency = this.drinkArray.length / days;
+  
+    // Відсоток від цілі
+    if (this.selectedMode === 'day') {
+      // У режимі "день" — відсоток від денної цілі
+      this.goalAchievement = (this.hydrationGoal > 0)
+        ? Math.min((this.totalConsumption / this.hydrationGoal) * 100, 100)
+        : 0;
+    } else {
+      // У режимах "тиждень" і "місяць" — середній відсоток від денної цілі
+      const averageDailyGoal = this.hydrationGoal * days; // Загальна ціль за період
+      this.goalAchievement = (this.hydrationGoal > 0)
+        ? Math.min((this.totalConsumption / averageDailyGoal) * 100, 100)
+        : 0;
+    }
+  }
+  
+  getUniqueDays(drinks: Array<{ amount: number, timestamp: Date }>): number {
+    const uniqueDays = new Set<string>();
+    drinks.forEach(drink => {
+      const date = new Date(drink.timestamp).toLocaleDateString();
+      uniqueDays.add(date);
+    });
+    return uniqueDays.size;
   }
 
   createWaterConsumptionChart(): void {
@@ -83,7 +142,7 @@ export class Tab2Page {
       },
     });
   }
-  
+
   getChartData(): { labels: string[], data: number[] } {
     switch (this.selectedMode) {
       case 'day':
@@ -107,7 +166,7 @@ export class Tab2Page {
 
       return this.drinkArray
         .filter(drink => new Date(drink.timestamp) >= start && new Date(drink.timestamp) < end)
-        .reduce((sum, drink) => sum + drink.amount, 0) / 1000;
+        .reduce((sum, drink) => sum + drink.amount, 0) / 1000;  
     });
 
     return { labels, data };
@@ -127,7 +186,7 @@ export class Tab2Page {
         .filter(drink => new Date(drink.timestamp) >= startOfDay && new Date(drink.timestamp) <= endOfDay)
         .reduce((sum, drink) => sum + drink.amount, 0);
 
-      data.push(dailyConsumption / 1000);
+      data.push(dailyConsumption / 1000);  
     }
     return { labels, data };
   }
@@ -146,13 +205,8 @@ export class Tab2Page {
         .filter(drink => new Date(drink.timestamp) >= startOfDay && new Date(drink.timestamp) <= endOfDay)
         .reduce((sum, drink) => sum + drink.amount, 0);
 
-      data.push(dailyConsumption / 1000);
+      data.push(dailyConsumption / 1000); 
     }
     return { labels, data };
-  }
-
-  changeMode(mode: 'day' | 'week' | 'month') {
-    this.selectedMode = mode;
-    this.createWaterConsumptionChart();
   }
 }

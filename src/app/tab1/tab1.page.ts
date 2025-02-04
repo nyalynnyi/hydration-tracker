@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Chart, ArcElement, Tooltip, Legend, DoughnutController } from 'chart.js';
 import { AlertController } from '@ionic/angular';
 import { AppStorageService } from '../app-storage.service';
-import { DRINK_HISTORY, WEIGHT, ACTIVE_MINUTES } from '../app.constants';
+import { DRINK_HISTORY, WEIGHT, ACTIVE_MINUTES, WATER_GOAL } from '../app.constants';
 
 Chart.register(ArcElement, Tooltip, Legend, DoughnutController);
 
@@ -122,7 +122,7 @@ export class Tab1Page  {
             this.hydrationGoal = Number(data.hydrationGoal);
             localStorage.setItem(WEIGHT, String(this.weightKg));
             localStorage.setItem(ACTIVE_MINUTES, String(this.activityMinutes));
-            localStorage.setItem('hydrationGoal', String(this.hydrationGoal));
+            localStorage.setItem(WATER_GOAL, String(this.hydrationGoal));
             this.updateIdealWaterIntake();
           },
         },
@@ -135,7 +135,7 @@ export class Tab1Page  {
   async loadUserData() {
     const storedWeight = localStorage.getItem(WEIGHT);
     const storedActivity = localStorage.getItem(ACTIVE_MINUTES);
-    const storedGoal = localStorage.getItem('hydrationGoal');
+    const storedGoal = localStorage.getItem(WATER_GOAL);
 
     if (storedWeight && storedActivity && storedGoal) {
       this.weightKg = Number(storedWeight);
