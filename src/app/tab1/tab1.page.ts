@@ -12,10 +12,10 @@ Chart.register(ArcElement, Tooltip, Legend, DoughnutController);
 })
 export class Tab1Page implements OnInit {
   hydrationChart: any;
-  currentHydration: number = 0; // Випито води (унції)
-  hydrationGoal: number = 64;
-  idealWaterIntake: number = 2810; // Ідеальна кількість води (мл)
-  waterIntakeGoal: number = 2400; // Ціль гідратації
+  currentHydration: number = 0; 
+  hydrationGoal: number = 2400;
+  idealWaterIntake: number = 2810; 
+ 
 
   constructor(private alertController: AlertController) {}
 

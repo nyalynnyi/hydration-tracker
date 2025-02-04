@@ -4,7 +4,6 @@
 
     <ion-grid>
       <ion-row>
-        <!-- Перша картка: Ідеальна кількість води -->
         <ion-col size="6">
           <ion-card>
             <ion-card-header>
@@ -17,7 +16,6 @@
           </ion-card>
         </ion-col>
     
-        <!-- Друга картка: Добова ціль -->
         <ion-col size="6">
           <ion-card>
             <ion-card-header>
@@ -25,7 +23,7 @@
             </ion-card-header>
             <ion-card-content class="ion-text-center">
               <ion-icon name="water-outline" style="zoom:2.0;"></ion-icon>
-              <h2>{{ waterIntakeGoal }} ml</h2>
+              <h2>{{ hydrationGoal }} ml</h2>
             </ion-card-content>
           </ion-card>
         </ion-col>
@@ -37,7 +35,7 @@
       <div class="chart-info">
         <div class="percentage">{{ (currentHydration / hydrationGoal * 100) | number:'1.0-0' }}%</div>
         <div class="remaining">
-          {{ currentHydration + '/' + hydrationGoal + 'oz' }}
+          {{ currentHydration + '/' + hydrationGoal + 'ml' }}
         </div>
       </div>
     </div>
