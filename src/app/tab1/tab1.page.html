@@ -1,44 +1,52 @@
-<ion-header>
-  <ion-toolbar>
-    <ion-title>Hydration tracker</ion-title>
-  </ion-toolbar>
-</ion-header>
-
-<ion-content>
-  <div style="text-align: center; padding: 20px;">
+<ion-content class="ion-padding">
+  
     <h2>Current Hydration</h2>
 
-    <div style="position: relative; width: 300px; height: 300px; margin: 20px auto;">
-      <canvas id="hydrationChart"></canvas>
-    </div>
+    <ion-grid>
+      <ion-row>
+        <!-- Перша картка: Ідеальна кількість води -->
+        <ion-col size="6">
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>Ideal Water Intake</ion-card-title>
+            </ion-card-header>
+            <ion-card-content class="ion-text-center">
+              <ion-icon name="medal-outline" style="zoom:2.0;"></ion-icon>
+              <h2>{{ idealWaterIntake }} ml</h2>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+    
+        <!-- Друга картка: Добова ціль -->
+        <ion-col size="6">
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>Water Intake Goal</ion-card-title>
+            </ion-card-header>
+            <ion-card-content class="ion-text-center">
+              <ion-icon name="water-outline" style="zoom:2.0;"></ion-icon>
+              <h2>{{ waterIntakeGoal }} ml</h2>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
     
     <div class="chart-container">
-      <div class="circle">
-        <div class="mask full" id="mask-full"></div>
-        <div class="mask half">
-          <div class="fill" id="mask-fill"></div>
-        </div>
-        <div class="inside-circle">
-          <span id="percentage">0%</span>
+      <canvas id="hydrationChart"></canvas>
+      <div class="chart-info">
+        <div class="percentage">{{ (currentHydration / hydrationGoal * 100) | number:'1.0-0' }}%</div>
+        <div class="remaining">
+          {{ currentHydration + '/' + hydrationGoal + 'oz' }}
         </div>
       </div>
-    
-      <button onclick="addWater(10)">+10</button>
-      <button onclick="addWater(20)">+20</button>
-    </div>
-    
-    
-
-    <div style="margin-top: 20px;">
-      <h3>Goal: {{ hydrationGoal }}oz</h3>
-      <h4>Drinked: {{ currentHydration }}oz</h4>
-      <h4>Last: {{ hydrationGoal - currentHydration > 0 ? hydrationGoal - currentHydration : 0 }}oz</h4>
     </div>
 
+    <h3 style="text-align: center;">Recently added</h3>
+    <hr style="border: 0; height: 2px; background: #545454; margin-top: 10px;">
+
     <div style="margin-top: 20px;">
-      <ion-button color="primary" expand="block" (click)="addWater(8)">Add 8oz</ion-button>
-      <ion-button color="secondary" expand="block" (click)="addWater(16)">Add 16oz</ion-button>
-      <ion-button color="tertiary" expand="block" (click)="addWater(32)">Add 32oz</ion-button>
+      <ion-button color="primary" expand="block" (click)="showInputPrompt()">Add drink</ion-button>    
     </div>
-  </div>
+ 
 </ion-content>

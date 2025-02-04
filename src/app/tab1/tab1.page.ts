@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Chart, ArcElement, Tooltip, Legend, DoughnutController } from 'chart.js';
+import { AlertController } from '@ionic/angular';
 
 Chart.register(ArcElement, Tooltip, Legend, DoughnutController);
 
@@ -12,9 +13,46 @@ Chart.register(ArcElement, Tooltip, Legend, DoughnutController);
 export class Tab1Page implements OnInit {
   hydrationChart: any;
   currentHydration: number = 0; // Випито води (унції)
-  hydrationGoal: number = 64; // Ціль гідратації
+  hydrationGoal: number = 64;
+  idealWaterIntake: number = 2810; // Ідеальна кількість води (мл)
+  waterIntakeGoal: number = 2400; // Ціль гідратації
 
-  constructor() {}
+  constructor(private alertController: AlertController) {}
+
+  async showInputPrompt() {
+    const alert = await this.alertController.create({
+      header: 'How much liquid (ml)?',
+      inputs: [
+        {
+          name: 'amount',
+          type: 'number',
+          placeholder: 'Enter amount',
+          min: 0,  
+        },
+      ],
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel',
+        },
+        {
+          text: 'OK',
+          handler: (data) => {
+            const amount = parseInt(data.amount, 10);
+            if (isNaN(amount) || amount <= 0) {
+              return false;  
+            }
+            this.addWater(amount);  
+            return true;
+          },
+        },
+      ],
+    });
+  
+    await alert.present();
+  }
+
+  
 
   ngOnInit(): void {
     this.createHydrationChart();
