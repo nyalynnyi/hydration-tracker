@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Chart, ArcElement, Tooltip, Legend, DoughnutController } from 'chart.js';
 import { AlertController } from '@ionic/angular';
 import { AppStorageService } from '../app-storage.service';
-import { DRINK_HISTORY } from '../app.constants';
+import { DRINK_HISTORY, WEIGHT, ACTIVE_MINUTES } from '../app.constants';
 
 Chart.register(ArcElement, Tooltip, Legend, DoughnutController);
 
@@ -15,9 +15,12 @@ Chart.register(ArcElement, Tooltip, Legend, DoughnutController);
 export class Tab1Page implements OnInit {
   hydrationChart: any;
   currentHydration: number = 0; 
-  hydrationGoal: number = 2400;
-  idealWaterIntake: number = 2810; 
+  hydrationGoal: number = 0;
+  idealWaterIntake: number = 0; 
   drinkArray: Array<{ amount: number, timestamp: Date }> = [];
+  weightKg: number = 0;
+  activityMinutes: number = 0;
+  
 
   constructor(private alertController: AlertController,
     private appStorage: AppStorageService) {}
@@ -58,6 +61,7 @@ export class Tab1Page implements OnInit {
 
   async ngOnInit(): Promise<void> {
     this.createHydrationChart();
+    this.loadUserData();
   
     const history = await this.appStorage.get(DRINK_HISTORY);
     if (history) {
@@ -102,6 +106,59 @@ export class Tab1Page implements OnInit {
     });
   }
 
+  async calculateAmount() {
+    const alert = await this.alertController.create({
+      header: 'Enter Your Details',
+      inputs: [
+        { name: 'weightKg', type: 'number', placeholder: 'Weight (kg)' },
+        { name: 'activityMinutes', type: 'number', placeholder: 'Daily activity (minutes)' },
+        { name: 'hydrationGoal', type: 'number', placeholder: 'Water Goal (ml)' }
+      ],
+      buttons: [
+        {
+          text: 'OK',
+          handler: (data) => {
+            this.weightKg = Number(data.weightKg);
+            this.activityMinutes = Number(data.activityMinutes);
+            this.hydrationGoal = Number(data.hydrationGoal);
+            localStorage.setItem(WEIGHT, String(this.weightKg));
+            localStorage.setItem(ACTIVE_MINUTES, String(this.activityMinutes));
+            localStorage.setItem('hydrationGoal', String(this.hydrationGoal));
+            this.updateIdealWaterIntake();
+          },
+        },
+      ],
+    });
+
+    await alert.present();
+  }
+
+  async loadUserData() {
+    const storedWeight = localStorage.getItem(WEIGHT);
+    const storedActivity = localStorage.getItem(ACTIVE_MINUTES);
+    const storedGoal = localStorage.getItem('hydrationGoal');
+
+    if (storedWeight && storedActivity && storedGoal) {
+      this.weightKg = Number(storedWeight);
+      this.activityMinutes = Number(storedActivity);
+      this.hydrationGoal = Number(storedGoal);
+      this.updateIdealWaterIntake();
+    } else {
+      await this.calculateAmount();
+    }
+  }
+
+
+  calculateIdealWaterIntake(weightKg: number, activityMinutes: number): number {
+    const baseWaterIntakeMl = weightKg * 35;
+    const activityWaterIntakeMl = (activityMinutes / 30) * 355;
+    return Math.round(baseWaterIntakeMl + activityWaterIntakeMl);
+  }
+
+  updateIdealWaterIntake(): void {
+    this.idealWaterIntake = this.calculateIdealWaterIntake(this.weightKg, this.activityMinutes);
+  }
+
   updateChart(newValue: number): void {
     if (!this.hydrationChart) {
       console.error('Hydration chart is not initialized.');
@@ -122,6 +179,7 @@ export class Tab1Page implements OnInit {
   
     this.appStorage.set(DRINK_HISTORY, JSON.stringify(this.drinkArray));
   }
+
   goalWater(amount: number): void {
     this.currentHydration = Math.min(this.currentHydration + amount, this.hydrationGoal);
     this.updateChart(this.currentHydration);
@@ -131,6 +189,5 @@ export class Tab1Page implements OnInit {
   
     this.appStorage.set(DRINK_HISTORY, JSON.stringify(this.drinkArray));
   }
-
   
 }
