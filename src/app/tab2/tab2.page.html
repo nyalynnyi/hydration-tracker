@@ -1,17 +1,25 @@
-<ion-header [translucent]="true">
+<ion-header>
   <ion-toolbar>
-    <ion-title>
-      Tab 2
-    </ion-title>
+    <ion-title>Денне споживання води</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Tab 2</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-segment [(ngModel)]="selectedMode" (ionChange)="changeMode(selectedMode)">
+  <ion-segment-button value="day">
+    DAY
+  </ion-segment-button>
+  <ion-segment-button value="week">
+    WEEK
+  </ion-segment-button>
+  <ion-segment-button value="month">
+    MOUNTH
+  </ion-segment-button>
+</ion-segment>
 
-  <app-explore-container name="Tab 2 page"></app-explore-container>
+<ion-content>
+  <div style="position: relative; height: 400px;">
+    <canvas id="waterConsumptionChart"></canvas>
+  </div>
 </ion-content>
+
+

@@ -12,7 +12,7 @@ Chart.register(ArcElement, Tooltip, Legend, DoughnutController);
   styleUrls: ['tab1.page.scss'],
   standalone: false,
 })
-export class Tab1Page implements OnInit {
+export class Tab1Page  {
   hydrationChart: any;
   currentHydration: number = 0; 
   hydrationGoal: number = 0;
@@ -20,7 +20,7 @@ export class Tab1Page implements OnInit {
   drinkArray: Array<{ amount: number, timestamp: Date }> = [];
   weightKg: number = 0;
   activityMinutes: number = 0;
-  
+  maxHydration = 7000;
 
   constructor(private alertController: AlertController,
     private appStorage: AppStorageService) {}
@@ -58,17 +58,16 @@ export class Tab1Page implements OnInit {
     await alert.present();
   }
 
-
-  async ngOnInit(): Promise<void> {
+  async ionViewDidEnter() {
     this.createHydrationChart();
     this.loadUserData();
-  
-    const history = await this.appStorage.get(DRINK_HISTORY);
-    if (history) {
-      this.drinkArray = JSON.parse(history);
+    const data = await this.appStorage.get(DRINK_HISTORY);
+    if (data) {
+      this.drinkArray = JSON.parse(data);
+      this.calculateTodaysHydration();
     }
   }
-
+  
   createHydrationChart(): void {
     const ctx = document.getElementById('hydrationChart') as HTMLCanvasElement | null;
 
@@ -148,7 +147,6 @@ export class Tab1Page implements OnInit {
     }
   }
 
-
   calculateIdealWaterIntake(weightKg: number, activityMinutes: number): number {
     const baseWaterIntakeMl = weightKg * 35;
     const activityWaterIntakeMl = (activityMinutes / 30) * 355;
@@ -171,14 +169,39 @@ export class Tab1Page implements OnInit {
   }
 
   addWater(amount: number): void {
-    this.currentHydration = Math.min(this.currentHydration + amount, this.hydrationGoal);
-    this.updateChart(this.currentHydration);
+    const totalHydration = this.currentHydration + amount;
+  
+    if (totalHydration > this.maxHydration) {
+      this.showMaxHydrationAlert();
+      return;
+    }
+  
+    this.currentHydration = totalHydration;
+  
+    const remaining = this.hydrationGoal - this.currentHydration;
+    this.hydrationChart.data.datasets[0].data = [
+      this.currentHydration,
+      remaining > 0 ? remaining : 0
+    ];
+    this.hydrationChart.update();
   
     const newDrink = { amount: amount, timestamp: new Date() };
     this.drinkArray.unshift(newDrink);
   
     this.appStorage.set(DRINK_HISTORY, JSON.stringify(this.drinkArray));
   }
+  
+  async showMaxHydrationAlert() {
+    const alert = await this.alertController.create({
+      header: 'Warning',
+      message: 'You have reached the maximum daily limit of 7 liters!',
+      buttons: ['OK']
+    });
+  
+    await alert.present();
+  }
+  
+  
 
   goalWater(amount: number): void {
     this.currentHydration = Math.min(this.currentHydration + amount, this.hydrationGoal);
@@ -188,6 +211,22 @@ export class Tab1Page implements OnInit {
     this.drinkArray.unshift(newDrink);
   
     this.appStorage.set(DRINK_HISTORY, JSON.stringify(this.drinkArray));
+  }
+
+  calculateTodaysHydration(): void {
+    const today = new Date();
+    const todayStart = new Date(today.setHours(0, 0, 0, 0));
+
+    this.currentHydration = this.drinkArray
+      .filter(drink => new Date(drink.timestamp) >= todayStart)
+      .reduce((sum, drink) => sum + drink.amount, 0);
+
+    this.updateChart(this.currentHydration);
+  }
+  deleteDrink(index: number): void {
+    const deletedDrink = this.drinkArray.splice(index, 1); // Видаляємо елемент
+    this.appStorage.set(DRINK_HISTORY, JSON.stringify(this.drinkArray)); // Оновлюємо збережену історію
+    this.calculateTodaysHydration(); // Оновлюємо гідратацію після видалення
   }
   
 }
