@@ -3,6 +3,9 @@ import { Chart, ArcElement, Tooltip, Legend, DoughnutController } from 'chart.js
 import { AlertController } from '@ionic/angular';
 import { AppStorageService } from '../app-storage.service';
 import { DRINK_HISTORY, WEIGHT, ACTIVE_MINUTES, WATER_GOAL } from '../app.constants';
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
+import { LocalNotifications } from '@capacitor/local-notifications';
+
 
 Chart.register(ArcElement, Tooltip, Legend, DoughnutController);
 
@@ -59,6 +62,7 @@ export class Tab1Page  {
   }
 
   async ionViewDidEnter() {
+    this.clearAllNotifications();
     this.createHydrationChart();
     this.loadUserData();
     const data = await this.appStorage.get(DRINK_HISTORY);
@@ -66,44 +70,104 @@ export class Tab1Page  {
       this.drinkArray = JSON.parse(data);
       this.calculateTodaysHydration();
     }
+    await this.checkLastDrinkAndNotify();
   }
-  
-  createHydrationChart(): void {
-    const ctx = document.getElementById('hydrationChart') as HTMLCanvasElement | null;
 
-    if (!ctx) {
-      console.error('Canvas element with id "hydrationChart" not found.');
+
+  async checkLastDrinkAndNotify() {
+    const lastDrink = this.drinkArray[0]; // Останній напій в масиві
+    if (!lastDrink) {
+      console.log("Немає інформації про останнє пиття.");
       return;
     }
 
-    this.hydrationChart = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: ['Випито', 'Залишок'],
-        datasets: [
-          {
-            data: [this.currentHydration, this.hydrationGoal - this.currentHydration],
-            backgroundColor: ['#4A90E2', '#E5E5E5'],
-            hoverBackgroundColor: ['#357ABD', '#CFCFCF'],
-            borderWidth: 0,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            display: false,
-          },
-          tooltip: {
-            enabled: true,
-          },
-        },
-        cutout: '70%',
-      },
+    const lastDrinkTime = new Date(lastDrink.timestamp);
+    const currentTime = new Date();
+    const timeDifference = currentTime.getTime() - lastDrinkTime.getTime();
+    const oneHourInMillis = 3 * 1000; // 1 година в мілісекундах
+
+    // Якщо з останнього пиття пройшло більше години
+    if (timeDifference >= oneHourInMillis) {
+      await this.sendReminderNotification();
+    }
+  }
+
+  async sendReminderNotification() {
+    await LocalNotifications.schedule({
+      notifications: [
+        {
+          title: 'Нагадування',
+          body: 'Ви вже годину не пили! Час поповнити рідину.',
+          id: 1,
+          schedule: { at: new Date(Date.now() + 1000 * 3) } // Через 3 секунди для тестування
+        }
+      ],
     });
   }
+
+  
+
+async  clearAllNotifications() {
+  try {
+    const permissionStatus = await LocalNotifications.checkPermissions();
+
+    if (permissionStatus.display !== 'granted') {
+      const permissionResponse = await LocalNotifications.requestPermissions();
+      if (permissionResponse.display !== 'granted') {
+        console.log('Дозвіл на сповіщення не надано.');
+        return;
+      } else {
+        console.log('Дозвіл на сповіщення надано.');
+      }
+    }
+
+    const pending = await LocalNotifications.getPending();
+    console.log('Очікувані сповіщення перед очищенням:', pending);
+
+
+  } catch (error) {
+    console.error('Помилка при очищенні сповіщень:', error);
+  }
+}
+
+    
+  
+createHydrationChart(): void {
+  const ctx = document.getElementById('hydrationChart') as HTMLCanvasElement | null;
+
+  if (!ctx) {
+    console.error('Canvas element with id "hydrationChart" not found.');
+    return;
+  }
+
+  this.hydrationChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      datasets: [
+        {
+          data: [this.currentHydration, this.hydrationGoal - this.currentHydration],
+          backgroundColor: ['#4A90E2', '#E5E5E5'],
+          hoverBackgroundColor: ['#357ABD', '#CFCFCF'],
+          borderWidth: 0,  
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false, // Прибирає легенду (підписи)
+        },
+        tooltip: {
+          enabled: false, // Вимикає підказки, якщо не потрібні
+        },
+      },
+      cutout: '80%',
+    },
+  });
+}
+
 
   async calculateAmount() {
     const alert = await this.alertController.create({
@@ -189,7 +253,20 @@ export class Tab1Page  {
     this.drinkArray.unshift(newDrink);
   
     this.appStorage.set(DRINK_HISTORY, JSON.stringify(this.drinkArray));
+  
+    // Якщо ціль досягнута, вібруємо
+    if (this.currentHydration >= this.hydrationGoal) {
+      this.triggerVibration();
+    }
   }
+  
+  async triggerVibration() {
+    await Haptics.vibrate({ duration: 500 });
+  setTimeout(async () => {
+    await Haptics.vibrate({ duration: 500 });
+  }, 700);
+  }
+  
   
   async showMaxHydrationAlert() {
     const alert = await this.alertController.create({
@@ -230,3 +307,4 @@ export class Tab1Page  {
   }
   
 }
+
