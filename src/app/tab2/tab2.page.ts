@@ -26,7 +26,6 @@ export class Tab2Page {
   async ionViewDidEnter() {
     await this.loadDrinkHistory();
     this.createWaterConsumptionChart();
-    console.log(this.hydrationGoal)
   }
 
   changeMode(mode: 'day' | 'week' | 'month') {
@@ -66,7 +65,6 @@ export class Tab2Page {
         .filter(drink => new Date(drink.timestamp).toLocaleDateString() === today)
         .length / 24;
 
-      // Відсоток від денної цілі
       this.goalAchievement = (this.hydrationGoal > 0)
         ? Math.min((this.totalConsumption / this.hydrationGoal) * 100, 100)
         : 0;

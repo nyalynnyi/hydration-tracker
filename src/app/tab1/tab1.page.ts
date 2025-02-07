@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Chart, ArcElement, Tooltip, Legend, DoughnutController } from 'chart.js';
+import { Chart, ArcElement, Tooltip, Legend } from 'chart.js';
 import { AlertController } from '@ionic/angular';
 import { AppStorageService } from '../app-storage.service';
 import { DRINK_HISTORY, WEIGHT, ACTIVE_MINUTES, WATER_GOAL } from '../app.constants';
@@ -7,7 +7,7 @@ import { Haptics } from '@capacitor/haptics';
 import { LocalNotifications } from '@capacitor/local-notifications';
 
 
-Chart.register(ArcElement, Tooltip, Legend, DoughnutController);
+Chart.register(ArcElement, Tooltip, Legend);
 
 @Component({
   selector: 'app-tab1',
@@ -82,12 +82,11 @@ export class Tab1Page  {
       this.weightKg = Number(storedWeight);
       this.activityMinutes = Number(storedActivity);
       this.hydrationGoal = Number(storedGoal);
-      this.updateIdealWaterIntake();
+      this.idealWaterIntake = this.calculateIdealWaterIntake(this.weightKg, this.activityMinutes);
     } else {
       await this.calculateAmount();
     }
   }
-
 
   async checkLastDrinkAndNotify() {
     const lastDrink = this.drinkArray[0]; 
@@ -118,62 +117,57 @@ export class Tab1Page  {
     });
   }
 
+  async clearAllNotifications() {
+    try {
+      const permissionStatus = await LocalNotifications.checkPermissions();
 
-async  clearAllNotifications() {
-  try {
-    const permissionStatus = await LocalNotifications.checkPermissions();
-
-    if (permissionStatus.display !== 'granted') {
-      const permissionResponse = await LocalNotifications.requestPermissions();
-      if (permissionResponse.display !== 'granted') {
-        return;
-      } else {
+      if (permissionStatus.display !== 'granted') {
+        const permissionResponse = await LocalNotifications.requestPermissions();
+        if (permissionResponse.display !== 'granted') {
+          return;
+        }
       }
+
+      const pending = await LocalNotifications.getPending();
+
+    } catch (error) {}
+  }
+  
+  createHydrationChart(): void {
+    const ctx = document.getElementById('hydrationChart') as HTMLCanvasElement | null;
+
+    if (!ctx) {
+      console.error('Canvas element with id "hydrationChart" not found.');
+      return;
     }
 
-    const pending = await LocalNotifications.getPending();
-
-
-  } catch (error) {
-  }
-}
- 
-createHydrationChart(): void {
-  const ctx = document.getElementById('hydrationChart') as HTMLCanvasElement | null;
-
-  if (!ctx) {
-    console.error('Canvas element with id "hydrationChart" not found.');
-    return;
-  }
-
-  this.hydrationChart = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      datasets: [
-        {
-          data: [this.currentHydration, this.hydrationGoal - this.currentHydration],
-          backgroundColor: ['#4A90E2', '#E5E5E5'],
-          hoverBackgroundColor: ['#357ABD', '#CFCFCF'],
-          borderWidth: 0,  
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          display: false, 
-        },
-        tooltip: {
-          enabled: false, 
-        },
+    this.hydrationChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        datasets: [
+          {
+            data: [this.currentHydration, this.hydrationGoal - this.currentHydration],
+            backgroundColor: ['#4A90E2', '#E5E5E5'],
+            hoverBackgroundColor: ['#357ABD', '#CFCFCF'],
+            borderWidth: 0,  
+          },
+        ],
       },
-      cutout: '80%',
-    },
-  });
-}
-
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false, 
+          },
+          tooltip: {
+            enabled: false, 
+          },
+        },
+        cutout: '80%',
+      },
+    });
+  }
 
   async calculateAmount() {
     const alert = await this.alertController.create({
@@ -193,7 +187,7 @@ createHydrationChart(): void {
             localStorage.setItem(WEIGHT, String(this.weightKg));
             localStorage.setItem(ACTIVE_MINUTES, String(this.activityMinutes));
             localStorage.setItem(WATER_GOAL, String(this.hydrationGoal));
-            this.updateIdealWaterIntake();
+            this.idealWaterIntake = this.calculateIdealWaterIntake(this.weightKg, this.activityMinutes);
           },
         },
       ],
@@ -202,16 +196,12 @@ createHydrationChart(): void {
     await alert.present();
   }
 
-
   calculateIdealWaterIntake(weightKg: number, activityMinutes: number): number {
     const baseWaterIntakeMl = weightKg * 35;
     const activityWaterIntakeMl = (activityMinutes / 30) * 355;
     return Math.round(baseWaterIntakeMl + activityWaterIntakeMl);
   }
 
-  updateIdealWaterIntake(): void {
-    this.idealWaterIntake = this.calculateIdealWaterIntake(this.weightKg, this.activityMinutes);
-  }
 
   updateChart(newValue: number): void {
     if (!this.hydrationChart) {
@@ -233,13 +223,7 @@ createHydrationChart(): void {
     }
   
     this.currentHydration = totalHydration;
-  
-    const remaining = this.hydrationGoal - this.currentHydration;
-    this.hydrationChart.data.datasets[0].data = [
-      this.currentHydration,
-      remaining > 0 ? remaining : 0
-    ];
-    this.hydrationChart.update();
+    this.updateChart(this.currentHydration);
   
     const newDrink = { amount: amount, timestamp: new Date() };
     this.drinkArray.unshift(newDrink);
@@ -250,12 +234,12 @@ createHydrationChart(): void {
       this.triggerVibration();
     }
   }
-  
+
   async triggerVibration() {
     await Haptics.vibrate({ duration: 500 });
-  setTimeout(async () => {
-    await Haptics.vibrate({ duration: 500 });
-  }, 700);
+    setTimeout(async () => {
+      await Haptics.vibrate({ duration: 500 });
+    }, 700);
   }
   
   async showMaxHydrationAlert() {
@@ -266,17 +250,6 @@ createHydrationChart(): void {
     });
   
     await alert.present();
-  }
-  
-  
-  goalWater(amount: number): void {
-    this.currentHydration = Math.min(this.currentHydration + amount, this.hydrationGoal);
-    this.updateChart(this.currentHydration);
-  
-    const newDrink = { amount: amount, timestamp: new Date() };
-    this.drinkArray.unshift(newDrink);
-  
-    this.appStorage.set(DRINK_HISTORY, JSON.stringify(this.drinkArray));
   }
 
   calculateTodaysHydration(): void {
@@ -289,7 +262,4 @@ createHydrationChart(): void {
 
     this.updateChart(this.currentHydration);
   }
-  
-
 }
-
