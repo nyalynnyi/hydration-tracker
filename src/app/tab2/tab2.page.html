@@ -16,33 +16,42 @@
   <div style="position: relative; height: 400px;">
     <canvas id="waterConsumptionChart"></canvas>
   </div>
-
-  <div class="statistics-container">
-    <ion-card>
-      <ion-card-header>
-        <ion-card-title>Details</ion-card-title>
-      </ion-card-header>
-      <ion-card-content>
-        <ion-list>
-          <ion-item>
-            <ion-label>Total amount of water</ion-label>
-            <ion-text slot="end">{{ totalConsumption.toFixed(2) }} ml</ion-text>
-          </ion-item>
-          <ion-item>
-            <ion-label>Average amount</ion-label>
-            <ion-text slot="end">{{ averageConsumption.toFixed(2) }} ml</ion-text>
-          </ion-item>
-          <ion-item>
-            <ion-label>Frequency</ion-label>
-            <ion-text slot="end">{{ consumptionFrequency.toFixed(2) }} </ion-text>
-          </ion-item>
-          <ion-item>
-            <ion-label>%</ion-label>
-            <ion-text slot="end">{{ goalAchievement.toFixed(2) }}%</ion-text>
-          </ion-item>
-        </ion-list>
-      </ion-card-content>
-    </ion-card>
-  </div>
+  
+  <ion-item>
+    <ion-label>
+      <ng-container *ngIf="selectedMode === 'day'">Total water today</ng-container>
+      <ng-container *ngIf="selectedMode === 'week'">Total water this week</ng-container>
+      <ng-container *ngIf="selectedMode === 'month'">Total water this month</ng-container>
+    </ion-label>
+    <ion-text slot="end">{{ totalConsumption.toFixed(2) }} ml</ion-text>
+  </ion-item>
+  
+  <ion-item>
+    <ion-label>
+      <ng-container *ngIf="selectedMode === 'day'">Average per hour</ng-container>
+      <ng-container *ngIf="selectedMode === 'week'">Average per day (week)</ng-container>
+      <ng-container *ngIf="selectedMode === 'month'">Average per day (month)</ng-container>
+    </ion-label>
+    <ion-text slot="end">{{ averageConsumption.toFixed(2) }} ml</ion-text>
+  </ion-item>
+  
+  <ion-item>
+    <ion-label>
+      <ng-container *ngIf="selectedMode === 'day'">Drinks per hour</ng-container>
+      <ng-container *ngIf="selectedMode === 'week'">Drinks per day</ng-container>
+      <ng-container *ngIf="selectedMode === 'month'">Drinks per day (month)</ng-container>
+    </ion-label>
+    <ion-text slot="end">{{ consumptionFrequency.toFixed(2) }}</ion-text>
+  </ion-item>
+  
+  <ion-item>
+    <ion-label>
+      <ng-container *ngIf="selectedMode === 'day'">Daily goal completion</ng-container>
+      <ng-container *ngIf="selectedMode === 'week'">Weekly goal completion</ng-container>
+      <ng-container *ngIf="selectedMode === 'month'">Monthly goal completion</ng-container>
+    </ion-label>
+    <ion-text slot="end">{{ goalAchievement.toFixed(2) }}%</ion-text>
+  </ion-item>
+  
 
 </ion-content>

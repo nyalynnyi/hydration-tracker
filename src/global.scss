@@ -35,3 +35,41 @@
 /* @import "@ionic/angular/css/palettes/dark.always.css"; */
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
 @import "@ionic/angular/css/palettes/dark.system.css";
+
+
+ion-content {
+    --background: var(--ion-background-color);
+    color: var(--ion-text-color);
+  }
+  
+  ion-card {
+    background-color: var(--ion-card-background);
+    color: var(--ion-text-color);
+  }
+
+  ion-segment-button{
+    color: var(--ion-segment-button-color)
+  }
+  
+  ion-card-title {
+    color: var(--ion-card-title-color);
+  }
+  
+  .chart-info .percentage,
+  .chart-info .remaining {
+    color: var(--ion-text-color);
+  }
+  
+  hr {
+    background: var(--ion-divider-color);
+  }
+  
+  ion-list ion-item {
+    background: var(--ion-card-background);
+    color: var(--ion-text-color);
+  }
+  
+  ion-button {
+    color: white;
+  }
+  

@@ -7,7 +7,10 @@ import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { LocalNotifications } from '@capacitor/local-notifications';
 
 
+
 Chart.register(ArcElement, Tooltip, Legend, DoughnutController);
+
+
 
 @Component({
   selector: 'app-tab1',
@@ -64,13 +67,29 @@ export class Tab1Page  {
   async ionViewDidEnter() {
     this.clearAllNotifications();
     this.createHydrationChart();
-    this.loadUserData();
+    await this.loadUserData(); // Call this to update data from storage
     const data = await this.appStorage.get(DRINK_HISTORY);
     if (data) {
       this.drinkArray = JSON.parse(data);
       this.calculateTodaysHydration();
     }
     await this.checkLastDrinkAndNotify();
+  }
+  
+  async loadUserData() {
+    const storedWeight = localStorage.getItem(WEIGHT);
+    const storedActivity = localStorage.getItem(ACTIVE_MINUTES);
+    const storedGoal = localStorage.getItem(WATER_GOAL);
+  
+    if (storedWeight && storedActivity && storedGoal) {
+      this.weightKg = Number(storedWeight);
+      this.activityMinutes = Number(storedActivity);
+      this.hydrationGoal = Number(storedGoal);
+      this.updateIdealWaterIntake();
+    } else {
+      // If no data is found, prompt the user to enter data
+      await this.calculateAmount();
+    }
   }
 
 
@@ -129,9 +148,7 @@ async  clearAllNotifications() {
     console.error('Помилка при очищенні сповіщень:', error);
   }
 }
-
-    
-  
+ 
 createHydrationChart(): void {
   const ctx = document.getElementById('hydrationChart') as HTMLCanvasElement | null;
 
@@ -196,20 +213,6 @@ createHydrationChart(): void {
     await alert.present();
   }
 
-  async loadUserData() {
-    const storedWeight = localStorage.getItem(WEIGHT);
-    const storedActivity = localStorage.getItem(ACTIVE_MINUTES);
-    const storedGoal = localStorage.getItem(WATER_GOAL);
-
-    if (storedWeight && storedActivity && storedGoal) {
-      this.weightKg = Number(storedWeight);
-      this.activityMinutes = Number(storedActivity);
-      this.hydrationGoal = Number(storedGoal);
-      this.updateIdealWaterIntake();
-    } else {
-      await this.calculateAmount();
-    }
-  }
 
   calculateIdealWaterIntake(weightKg: number, activityMinutes: number): number {
     const baseWaterIntakeMl = weightKg * 35;

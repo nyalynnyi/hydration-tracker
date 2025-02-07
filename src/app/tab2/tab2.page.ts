@@ -31,8 +31,10 @@ export class Tab2Page {
 
   changeMode(mode: 'day' | 'week' | 'month') {
     this.selectedMode = mode;
-    this.createWaterConsumptionChart();
+    this.calculateWaterStatistics(); // Оновлення статистики
+    this.createWaterConsumptionChart(); // Оновлення графіка
   }
+  
 
   async loadDrinkHistory() {
     const data = await this.appStorage.get(DRINK_HISTORY);
@@ -56,7 +58,7 @@ export class Tab2Page {
     // Середня кількість випитої води
     if (this.selectedMode === 'day') {
       // У режимі "день" середня кількість — це загальна кількість за день
-      this.averageConsumption = this.totalConsumption ; // Переводимо в літри
+      this.averageConsumption = this.totalConsumption/24 ; // Переводимо в літри
     } else {
       // У режимах "тиждень" і "місяць" — середня кількість на день
       this.averageConsumption = (this.totalConsumption / days) ; // Переводимо в літри
@@ -109,7 +111,7 @@ export class Tab2Page {
         labels: labels,
         datasets: [
           {
-            label: 'Споживання води (л)',
+            label: 'Water consumption',
             data: data,
             borderColor: '#4A90E2',
             backgroundColor: 'rgba(74, 144, 226, 0.2)',
