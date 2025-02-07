@@ -1,9 +1,24 @@
-<ion-content class="ion-padding">
-  <h2>Settings</h2>
-<ion-button (click)="showInputPrompt()">Set Details</ion-button>
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Drink History</ion-title>
+  </ion-toolbar>
+</ion-header>
 
-<ion-toggle (click)="toggleTheme()">Dark mode</ion-toggle>
+<ion-content>
+  <ion-list>
+    <ion-item-sliding *ngFor="let drink of drinkHistory; let i = index">
+      <ion-item>
+        <ion-label>
+          <h2>{{ drink.amount }} ml</h2>
+          <p>{{ drink.timestamp | date: 'medium' }}</p>
+        </ion-label>
+      </ion-item>
+
+      <ion-item-options side="end">
+        <ion-item-option color="danger" (click)="deleteDrink(i)">
+          Delete
+        </ion-item-option>
+      </ion-item-options>
+    </ion-item-sliding>
+  </ion-list>
 </ion-content>
-
-
-
