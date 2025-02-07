@@ -1,16 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { Chart, ArcElement, Tooltip, Legend, DoughnutController } from 'chart.js';
 import { AlertController } from '@ionic/angular';
 import { AppStorageService } from '../app-storage.service';
 import { DRINK_HISTORY, WEIGHT, ACTIVE_MINUTES, WATER_GOAL } from '../app.constants';
-import { Haptics, ImpactStyle } from '@capacitor/haptics';
+import { Haptics } from '@capacitor/haptics';
 import { LocalNotifications } from '@capacitor/local-notifications';
 
 
-
 Chart.register(ArcElement, Tooltip, Legend, DoughnutController);
-
-
 
 @Component({
   selector: 'app-tab1',
@@ -30,6 +27,18 @@ export class Tab1Page  {
 
   constructor(private alertController: AlertController,
     private appStorage: AppStorageService) {}
+
+    async ionViewDidEnter() {
+      this.clearAllNotifications();
+      this.createHydrationChart();
+      await this.loadUserData(); 
+      const data = await this.appStorage.get(DRINK_HISTORY);
+      if (data) {
+        this.drinkArray = JSON.parse(data);
+        this.calculateTodaysHydration();
+      }
+      await this.checkLastDrinkAndNotify();
+    }
 
   async showInputPrompt() {
     const alert = await this.alertController.create({
@@ -63,18 +72,6 @@ export class Tab1Page  {
   
     await alert.present();
   }
-
-  async ionViewDidEnter() {
-    this.clearAllNotifications();
-    this.createHydrationChart();
-    await this.loadUserData(); // Call this to update data from storage
-    const data = await this.appStorage.get(DRINK_HISTORY);
-    if (data) {
-      this.drinkArray = JSON.parse(data);
-      this.calculateTodaysHydration();
-    }
-    await this.checkLastDrinkAndNotify();
-  }
   
   async loadUserData() {
     const storedWeight = localStorage.getItem(WEIGHT);
@@ -87,25 +84,22 @@ export class Tab1Page  {
       this.hydrationGoal = Number(storedGoal);
       this.updateIdealWaterIntake();
     } else {
-      // If no data is found, prompt the user to enter data
       await this.calculateAmount();
     }
   }
 
 
   async checkLastDrinkAndNotify() {
-    const lastDrink = this.drinkArray[0]; // Останній напій в масиві
+    const lastDrink = this.drinkArray[0]; 
     if (!lastDrink) {
-      console.log("Немає інформації про останнє пиття.");
       return;
     }
 
     const lastDrinkTime = new Date(lastDrink.timestamp);
     const currentTime = new Date();
     const timeDifference = currentTime.getTime() - lastDrinkTime.getTime();
-    const oneHourInMillis = 3 * 1000; // 1 година в мілісекундах
+    const oneHourInMillis = 30 * 1000; 
 
-    // Якщо з останнього пиття пройшло більше години
     if (timeDifference >= oneHourInMillis) {
       await this.sendReminderNotification();
     }
@@ -115,16 +109,15 @@ export class Tab1Page  {
     await LocalNotifications.schedule({
       notifications: [
         {
-          title: 'Нагадування',
-          body: 'Ви вже годину не пили! Час поповнити рідину.',
+          title: 'Reminder',
+          body: 'It has been a while since your last drink!',
           id: 1,
-          schedule: { at: new Date(Date.now() + 1000 * 3) } // Через 3 секунди для тестування
+          schedule: { at: new Date(Date.now() + 1000 * 3) } 
         }
       ],
     });
   }
 
-  
 
 async  clearAllNotifications() {
   try {
@@ -133,19 +126,15 @@ async  clearAllNotifications() {
     if (permissionStatus.display !== 'granted') {
       const permissionResponse = await LocalNotifications.requestPermissions();
       if (permissionResponse.display !== 'granted') {
-        console.log('Дозвіл на сповіщення не надано.');
         return;
       } else {
-        console.log('Дозвіл на сповіщення надано.');
       }
     }
 
     const pending = await LocalNotifications.getPending();
-    console.log('Очікувані сповіщення перед очищенням:', pending);
 
 
   } catch (error) {
-    console.error('Помилка при очищенні сповіщень:', error);
   }
 }
  
@@ -174,10 +163,10 @@ createHydrationChart(): void {
       maintainAspectRatio: false,
       plugins: {
         legend: {
-          display: false, // Прибирає легенду (підписи)
+          display: false, 
         },
         tooltip: {
-          enabled: false, // Вимикає підказки, якщо не потрібні
+          enabled: false, 
         },
       },
       cutout: '80%',
@@ -257,7 +246,6 @@ createHydrationChart(): void {
   
     this.appStorage.set(DRINK_HISTORY, JSON.stringify(this.drinkArray));
   
-    // Якщо ціль досягнута, вібруємо
     if (this.currentHydration >= this.hydrationGoal) {
       this.triggerVibration();
     }
@@ -270,7 +258,6 @@ createHydrationChart(): void {
   }, 700);
   }
   
-  
   async showMaxHydrationAlert() {
     const alert = await this.alertController.create({
       header: 'Warning',
@@ -282,7 +269,6 @@ createHydrationChart(): void {
   }
   
   
-
   goalWater(amount: number): void {
     this.currentHydration = Math.min(this.currentHydration + amount, this.hydrationGoal);
     this.updateChart(this.currentHydration);
@@ -303,11 +289,7 @@ createHydrationChart(): void {
 
     this.updateChart(this.currentHydration);
   }
-  deleteDrink(index: number): void {
-    const deletedDrink = this.drinkArray.splice(index, 1); // Видаляємо елемент
-    this.appStorage.set(DRINK_HISTORY, JSON.stringify(this.drinkArray)); // Оновлюємо збережену історію
-    this.calculateTodaysHydration(); // Оновлюємо гідратацію після видалення
-  }
   
+
 }
 

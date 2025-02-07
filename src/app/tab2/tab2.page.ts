@@ -31,8 +31,8 @@ export class Tab2Page {
 
   changeMode(mode: 'day' | 'week' | 'month') {
     this.selectedMode = mode;
-    this.calculateWaterStatistics(); // Оновлення статистики
-    this.createWaterConsumptionChart(); // Оновлення графіка
+    this.calculateWaterStatistics(); 
+    this.createWaterConsumptionChart(); 
   }
   
 
@@ -41,7 +41,7 @@ export class Tab2Page {
     const storedGoal = localStorage.getItem(WATER_GOAL);
     if (data) {
       this.drinkArray = JSON.parse(data);
-      this.calculateWaterStatistics(); // Викликаємо розрахунок статистики
+      this.calculateWaterStatistics(); 
     }
     if(storedGoal){
       this.hydrationGoal = Number(storedGoal);
@@ -49,38 +49,68 @@ export class Tab2Page {
   }
 
   calculateWaterStatistics(): void {
-    // Загальна кількість випитої води (у мілілітрах)
     this.totalConsumption = this.drinkArray.reduce((sum, drink) => sum + drink.amount, 0);
   
-    // Кількість днів для розрахунку середніх значень
     const days = this.drinkArray.length > 0 ? this.getUniqueDays(this.drinkArray) : 1;
   
-    // Середня кількість випитої води
     if (this.selectedMode === 'day') {
-      // У режимі "день" середня кількість — це загальна кількість за день
-      this.averageConsumption = this.totalConsumption/24 ; // Переводимо в літри
-    } else {
-      // У режимах "тиждень" і "місяць" — середня кількість на день
-      this.averageConsumption = (this.totalConsumption / days) ; // Переводимо в літри
-    }
-  
-    // Частота споживання води (кількість разів на день)
-    this.consumptionFrequency = this.drinkArray.length / days;
-  
-    // Відсоток від цілі
-    if (this.selectedMode === 'day') {
-      // У режимі "день" — відсоток від денної цілі
+      const today = new Date().toLocaleDateString();
+      
+      this.totalConsumption = this.drinkArray
+        .filter(drink => new Date(drink.timestamp).toLocaleDateString() === today)
+        .reduce((sum, drink) => sum + drink.amount, 0);
+      
+      this.averageConsumption = this.totalConsumption / 24;
+      
+      this.consumptionFrequency = this.drinkArray
+        .filter(drink => new Date(drink.timestamp).toLocaleDateString() === today)
+        .length / 24;
+
+      // Відсоток від денної цілі
       this.goalAchievement = (this.hydrationGoal > 0)
         ? Math.min((this.totalConsumption / this.hydrationGoal) * 100, 100)
         : 0;
-    } else {
-      // У режимах "тиждень" і "місяць" — середній відсоток від денної цілі
-      const averageDailyGoal = this.hydrationGoal * days; // Загальна ціль за період
+
+    } else if (this.selectedMode === 'week') {
+      const lastWeek = new Date();
+      lastWeek.setDate(lastWeek.getDate() - 7);  
+
+      this.totalConsumption = this.drinkArray
+        .filter(drink => new Date(drink.timestamp) >= lastWeek)
+        .reduce((sum, drink) => sum + drink.amount, 0);
+
+      this.averageConsumption = this.totalConsumption / 7;
+
+      this.consumptionFrequency = this.drinkArray
+        .filter(drink => new Date(drink.timestamp) >= lastWeek)
+        .length / 7;
+
+      const averageDailyGoal = this.hydrationGoal; 
       this.goalAchievement = (this.hydrationGoal > 0)
-        ? Math.min((this.totalConsumption / averageDailyGoal) * 100, 100)
+        ? Math.min((this.totalConsumption / (averageDailyGoal * 7)) * 100, 100)
+        : 0;
+
+    } else if (this.selectedMode === 'month') {
+      const lastMonth = new Date();
+      lastMonth.setMonth(lastMonth.getMonth() - 1);  
+
+      this.totalConsumption = this.drinkArray
+        .filter(drink => new Date(drink.timestamp) >= lastMonth)
+        .reduce((sum, drink) => sum + drink.amount, 0);
+
+      this.averageConsumption = this.totalConsumption / 30;
+
+      this.consumptionFrequency = this.drinkArray
+        .filter(drink => new Date(drink.timestamp) >= lastMonth)
+        .length / 30;
+
+      const averageDailyGoal = this.hydrationGoal; 
+      this.goalAchievement = (this.hydrationGoal > 0)
+        ? Math.min((this.totalConsumption / (averageDailyGoal * 30)) * 100, 100)
         : 0;
     }
   }
+
   
   getUniqueDays(drinks: Array<{ amount: number, timestamp: Date }>): number {
     const uniqueDays = new Set<string>();

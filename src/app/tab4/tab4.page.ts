@@ -42,12 +42,10 @@ export class Tab4Page {
       saveUserData(data: any) {
         const { weightKg, activityMinutes, hydrationGoal } = data;
     
-        // Save the data to localStorage
         localStorage.setItem(WEIGHT, String(weightKg));
         localStorage.setItem(ACTIVE_MINUTES, String(activityMinutes));
         localStorage.setItem(WATER_GOAL, String(hydrationGoal));
     
-        // Update the values in the AppStorageService
         this.appStorage.set(WEIGHT, weightKg);
         this.appStorage.set(ACTIVE_MINUTES, activityMinutes);
         this.appStorage.set(WATER_GOAL, hydrationGoal);
@@ -56,5 +54,7 @@ export class Tab4Page {
     toggleTheme() {
       this.themeService.toggleTheme();
     }
+
+    
   
 }
